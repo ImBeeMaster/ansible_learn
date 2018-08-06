@@ -10,7 +10,7 @@ Vagrant.configure("2") do |config|
      box.memory = "512"
   end  
   config.vm.define "ansible-day-1" do |vb|
-    vb.vm.synced_folder ".", "/vagrant", type: "rsync"
+    vb.vm.synced_folder ".", "/vagrant", type: "smb", smb_username: "Oleksii_Pasichnyk"
     vb.vm.provider :virtualbox do |v|
       v.customize ["modifyvm", :id, "--memory", "512"]
       end
