@@ -1,0 +1,1 @@
+uwsgi --chdir=/home/vagrant/testproject --module=testproject.wsgi:application --env DJANGO_SETTINGS_MODULE=testproject.settings --master --pidfile=/tmp/project-master.pid --socket=127.0.0.1:49152 --processes=5 --uid=1000 --gid=2000 --harakiri=20 --max-requests=5000 --vacuum --daemonize=/var/log/uwsgi/yourproject.log
