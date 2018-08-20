@@ -1,0 +1,19 @@
+[localhost]
+192.168.2.2
+
+[loadbalance]
+192.168.2.3
+
+[web-server]
+web1 ansible_host=192.168.2.4
+192.168.2.5
+
+[db:children]
+db_master
+db_slave
+
+[db_master]
+192.168.2.6
+
+[db_slave]
+192.168.2.7
