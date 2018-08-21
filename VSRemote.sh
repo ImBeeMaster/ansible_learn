@@ -3,7 +3,7 @@
  exit
  fi
 echo 'Dont forget to run ^P + ">Remote: Start Server" in your VSCode'
-ssh -i $HOMEDRIVE\\$HOMEPATH\\.vagrant.d\\insecure_private_key vagrant@192.168.2.2  /bin/bash << EOSSH
+ssh -T -i $HOMEDRIVE\\$HOMEPATH\\.vagrant.d\\insecure_private_key vagrant@192.168.2.2  /bin/bash << EOSSH
 echo "export TEMP_VAR=$1" >> ~/.bash_profile
 
 # export TEMP_VAR=$1
@@ -12,7 +12,7 @@ echo "Hello world"
 exit
 EOSSH
  
- ssh -i $HOMEDRIVE\\$HOMEPATH\\.vagrant.d\\insecure_private_key -R 52698:localhost:52698 vagrant@192.168.2.2  /bin/bash << 'EOSSH'
+ ssh -T -i $HOMEDRIVE\\$HOMEPATH\\.vagrant.d\\insecure_private_key -R 52698:localhost:52698 vagrant@192.168.2.2  /bin/bash << 'EOSSH'
  source ~/.bash_profile
  env |grep TEMP_VAR
  #check is file and it's directory exists if not, then create
