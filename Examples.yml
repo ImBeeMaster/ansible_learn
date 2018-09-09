@@ -1,0 +1,186 @@
+---
+
+# Training 4
+# Import*, Include*
+tasks/handlers:
+- import_tasks: common.yml
+- include_tasks: common.yml
+---
+tasks:
+- include_tasks: wordpress.yml wp_user=alice # in the wordpress.yml variable wp_user will be set to "alice"
+- import_tasks: wordpress.yml wp_user=bob
+---
+# In case if instances (files, vars etc.) are dynamically generated,
+# use include*
+# In this case keys/one.pub and keys/two.pub are generated during ansible execution.
+tasks:
+- include_tasks: wordpress.yml
+  vars:
+     wp_user: alice
+     ssh_keys:
+     - "{{ lookup('file', 'keys/one.pub') }}"
+     - "{{ lookup('file', 'keys/two.pub') }}"
+---
+# Using gathering facts
+include_tasks: "{{ ansible_os_family}}".yml
+#instead of import_tasks: "{{ ansible_os_family}}".yml
+---
+# Loops cannot be used with import tasks statements
+- host: localhost
+  tasks:
+  - include_tasks: tasks.yml
+    vars:
+      message: "{{ item }}"
+    with_items:
+    - "message 1"
+    - "message 2"
+    - "message 3"
+    - "message 4"
+# Does not work with import_tasks
+---
+
+# Tasks grouping:
+  # roles/
+  #   oracledb/
+  #     tasks/
+  #     |-- main.yml
+  #     |-- oracledb-dbca.yml
+  #     |-- oracledb-emca.yml
+  #     |-- oracledb-inslall.yml
+  #     |-- oracledb-mkswap.yml
+  #     |-- oracledb-netca.yml
+  #     |-- oracledb-uninstall.yml
+  #     |-- oracledb-user.yml
+#tasks/main.yml :
+- include_tasks: oracledb-user.yml
+  when: '"user" in operations'
+- include_tasks: oracledb-install.yml
+  when: '"install" in operations'
+- include_tasks: oracledb-netca.yml
+  when: '"netca" in operations'
+- include_tasks: oracledb-dbca.yml
+  when: '"dbca" in operations'
+- include_tasks: oracledb-emca.yml
+  when: '"emca" in operations'
+# playbook.yml :
+- hosts: dbservers-oracle
+  roles:
+  - role: oracledb
+    oracle_version: 11.2.0.3
+    oracle_sid: DBS
+    operations:
+      - install 
+      - user
+      - netca 
+      - dbca 
+--- 
+# include_vars
+- name: Load a variable file based on the OS type, or a default if not found.
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}.yml"
+    - "{{ ansible_os_family }}.yml"
+    - default.yml
+- name: Include .jsin/.yml/.yaml files in vars/all dir and all nested directories
+  include_vars:
+    dir: vars/all
+---
+# The same with vars_files 
+- name: Play Level
+  hosts: webservers
+  
+  vars_files:
+  - "loaded_any_case.yml"
+  - - "{{ ansible_ditribution }}.yml"
+    - "{{ ansible_os_family }}.yml"
+    - "default.yml"
+  # OR
+  vars_files:
+  - "loaded_any_case.yml"
+  - ["{{ ansible_ditribution }}.yml", "{{ ansible_os_family }}.yml", "default.yml"]
+  ---
+# Reuse playbooks: import_playbook
+- import_playbook: webservers.yml
+  vars:
+    my_variable: my_value
+    
+- import_playbook: webservers.yml
+  when: something| bool 
+---
+- import_playbook: playboosk/000_docker-host.yml
+  when: ansible_connection == 'docker'
+- import_playbook: playboosk/001_init.yml
+
+- import_playbook: playboosk/002_docker-ce.yml
+  when: ansible_connection != 'docker'
+- import_playbook: playboosk/003_azure-cli.yml
+
+- import_playbook: playboosk/004_vault.yml
+  when: ansible_connection != 'docker'
+
+- import_playbook: playboosk/005_deprovision.yml
+---
+# Import_Roles
+
+- name: Pass variables
+  import_role:
+      name: myrole
+  vars:
+    role_variable: "custom value"
+--- 
+- name: Pass variables
+  include_role:
+      name: myrole
+  vars:
+    role_variable: "custom value"
+---
+# Role reuse with loops:
+- name: Role + loop
+  include_role:
+    name: my_role
+  vars:
+    role_variable: "{{ item }}"
+  with_items:
+    - 'one'
+    - 'two'
+# OR
+- name: Role + loop
+  include_role:
+    name: my_role
+  with_items:
+    - 'one'
+    - 'two'
+  loop_control:
+    loop_var: role_variable
+# Example:
+- name: Create several users
+  include_role:
+    name: user
+  vars:
+    admin_users: "{{ item }}"
+  with_items:
+    - devops
+    - admin 
+    - dev
+# this will launch the role called user three times and with admin_users variable changed each time
+
+###############
+# Tags 
+#
+$ ansible-playbook example.yml --tags "configuration,packages"
+$ ansible-playbook example.yml --skip-tags "notification"
+
+tasks:
+  - yum: name="{{ item }}" state=installed
+    with_items:
+      - httpd 
+      - memcached
+    tags:
+      - packages 
+    
+  - template: src=templates/src.j2 dest=/etc/foo.conf 
+    tags: configuration
+---
+# Example of playbook with include and tags 
+- include: playbooks/database.yml tags=database
+- include: playbooks/backup tags=backup
