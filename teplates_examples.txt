@@ -1,0 +1,23 @@
+---
+{% for user in users %}
+    {{ user.username }}
+{% endfor %}
+---
+{% for user in users|default([]) recursive %}
+   {{ user.username }}
+{% endfor %}
+---
+{% for key, value in my_dict.iteritems() %}
+    {{ key }}
+    {{ value }}
+{% endfor %}
+---
+{% for user in users %}
+  {{ user.username }}
+{% else %}
+   no users found
+{% endfor %}
+---
+{% for user in users if not user.hidden %}
+    {{ user.username }}
+{% endfor %}
